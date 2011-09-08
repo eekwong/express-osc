@@ -1,0 +1,23 @@
+- if (plan)
+  img#plan(src=plan.url,
+           width=plan.width,
+           height=plan.height,
+           onselectstart="return false;",
+           ondragstart="return false;")
+
+  - if (tags)
+    - for tag in tags
+      div.tag(id=tag.id,
+              style='left: #{tag.left}px; top: #{tag.top}px; background-color: #{tag.color}',
+              onmouseout="$('#photo#{tag.id}').hide('slow');",
+              onmouseover="$('#photo#{tag.id}').show('slow');")!= tag.name
+
+      div.tagphoto(id='photo#{tag.id}',
+                   style='left: #{tag.left + 30}px; top: #{tag.top + 30}px;')
+        - if (tag.photo && tag.photo.length > 0)
+          - if (tag.photo.indexOf('/') > -1)
+            img.user-photo(src=tag.photo)
+          - else
+            img.user-photo(src='http://graph.facebook.com/#{tag.photo}/picture?type=large')
+        - else
+          img.user-photo(src='../images/noimage.jpg')

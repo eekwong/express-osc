@@ -1,0 +1,377 @@
+- if (plan)
+  - var colors = [ 'Silver', 'Gray', 'Black', 'Red', 'Maroon', 'Yellow', 'Olive', 'Lime', 'Green', 'Aqua', 'Teal', 'Blue', 'Navy', 'Fuchsia', 'Purple', 'SkyBlue', 'DarkKhaki', 'DarkOrange' ];
+
+  //- ------------------- plan img ----------------------
+  img#plan(src=plan.url,
+           width=plan.width,
+           height=plan.height,
+           onselectstart="return false;",
+           ondragstart="return false;")
+
+  script(type='text/javascript')
+    $(function() {
+      $("#plan").dblclick(function(e) {  // make the img double clickable
+        $("input[name='newTagName']").val('');
+        $("input[name='newTagPhoto']").val('');
+        $("input[name='newTagLeft']").val(e.pageX);
+        $("input[name='newTagTop']").val(e.pageY);
+        $("#newTagColor").colorpicker({
+          size: 20,
+          label: 'Color: ',
+          hide: true
+        });
+        $("#new-tag-dialog").dialog("open");
+      });
+    });
+
+  //- ----------------- new tag dialog ------------------
+  div#new-tag-dialog(title="Add Tag")
+    fieldset
+      input(name='newTagLeft', type='hidden')
+      input(name='newTagTop', type='hidden')
+      div
+        select#newTagColor
+          - for color in colors
+            option(value=color)!= color
+      div
+        label Name:
+          input(name='newTagName')
+      div
+        label Photo:
+          input(name='newTagPhoto')
+
+  script(type='text/javascript')
+    $(function() {
+      $("#new-tag-dialog").dialog({
+        autoOpen: false,
+        width: 400,
+        modal: true,
+        buttons: {
+          "Create": function() {
+            $.ajax({
+              type: "POST",
+              url: '/admin/tag',
+              data: {
+                name: $("input[name='newTagName']").val(),
+                photo: $("input[name='newTagPhoto']").val(),
+                _plan: '#{plan.id}',
+                left: $("input[name='newTagLeft']").val(),
+                top: $("input[name='newTagTop']").val(),
+                color: $("#newTagColor option:selected").val()
+              },
+              success: function(tag) {
+                $("#new-tag-dialog").dialog("close");
+                $("<div id='" + tag._id + "' name='tag" + tag._id +
+                  "' style='left: " + tag.left + "px; top: " + tag.top +
+                  "px; background-color: " + tag.color +
+                  "' class='tag ui-draggable'>" + tag.name + "</div>")
+                  .appendTo("div.tab-panel");
+                $("#" + tag._id).effect("highlight", {}, 1000);
+                $(".colorpicker-wrap").remove();
+              }
+            });
+          },
+          "Cancel": function() {
+            $("#new-tag-dialog").dialog("close");
+            $(".colorpicker-wrap").remove();
+          }
+        }
+      });
+    });
+
+  //- ----------------- existing tags ------------------
+  - if (tags)
+    - for tag in tags
+      div.tag(id=tag.id,
+              name='tag#{tag.id}'
+              style='left: #{tag.left}px; top: #{tag.top}px; background-color: #{tag.color}')!= tag.name
+
+  script(type='text/javascript')
+    //- http://stackoverflow.com/questions/1805210/jquery-drag-and-drop-using-live-events
+    (function ($) {
+      $.fn.liveDraggable = function (opts) {
+        this.live("mouseover", function() {
+          if (!$(this).data("init")) {
+            $(this).data("init", true).draggable(opts);
+          }
+        });
+      };
+    }(jQuery));
+
+    $(function() {
+      $("div[name^='tag']").live('dblclick', function() {    // make the tags double clickable
+        $.ajax({                  // request server for the tag
+          type: "GET",
+          url: '/admin/tag/' + this.id,
+          success: function(tag) {
+            $("input[name='tagId']").val(tag._id);
+            $("input[name='tagName']").val(tag.name);
+            $("input[name='tagPhoto']").val(tag.photo);
+            $("#tagColor").val(tag.color)
+                          .colorpicker({
+              size: 20,
+              label: 'Color: ',
+              hide: true
+            });
+            $("#tag-dialog").dialog("open");
+          }
+        });
+      }).liveDraggable({    // make the tags draggable
+        containment: '#plan',
+        stop: function(event, ui) {
+          $.ajax({
+            type: "POST",
+            url: '/admin/tag/' + this.id + '/updateLocation',
+            data: {
+              left: this.offsetLeft,
+              top: this.offsetTop,
+              _method: 'PUT'
+            },
+            success: function(tag) {
+              // flash the div here eventually
+              $("#" + tag._id).effect("highlight", {}, 1000);
+            }
+          });
+        }
+      });
+    });
+
+  //- ----------------- edit tag dialog ------------------
+  div#tag-dialog(title="Edit Tag")
+    fieldset
+      input(name='tagId', type='hidden')
+      div
+        select#tagColor
+          - for color in colors
+            option(value=color)!= color
+      div
+        label Name:
+          input(name='tagName')
+      div
+        label Photo:
+          input(name='tagPhoto')
+
+  script(type='text/javascript')
+    $(function() {
+      $("#tag-dialog").dialog({
+        autoOpen: false,
+        width: 400,
+        modal: true,
+        buttons: {
+          "Update": function() {
+            $.ajax({
+              type: "POST",
+              url: '/admin/tag/' + $("input[name='tagId']").val(),
+              data: {
+                name: $("input[name='tagName']").val(),
+                photo: $("input[name='tagPhoto']").val(),
+                color: $("#tagColor option:selected").val(),
+                _method: 'PUT'
+              },
+              success: function(tag) {
+                $("#tag-dialog").dialog("close");
+                $("#" + tag._id)
+                  .text(tag.name)
+                  .css('backgroundColor', tag.color)
+                  .effect("highlight", {}, 1000);
+                $(".colorpicker-wrap").remove();
+              }
+            });
+          },
+          "Delete": function() {
+            $.ajax({
+              type: "POST",
+              url: '/admin/tag/' + $("input[name='tagId']").val(),
+              data: { _method: 'DELETE' },
+              success: function() {
+                $("#tag-dialog").dialog("close");
+                $("#" + $("input[name='tagId']").val()).remove();
+                $(".colorpicker-wrap").remove();
+              }
+            });
+          },
+          "Cancel": function() {
+            $("#tag-dialog").dialog("close");
+            $(".colorpicker-wrap").remove();
+          }
+        }
+      });
+    });
+
+  //- ----------------- plan dialog ------------------
+  div#plan-dialog(title="Edit Plan")
+    fieldset
+      label Name:
+        input(name='planName')
+      label URL:
+        input(name='planUrl')
+      label Width:
+        input(name='planWidth')
+      label Height:
+        input(name='planHeight')
+
+  script(type='text/javascript')
+    $(function() {
+      $("#plan-dialog").dialog({
+        autoOpen: false,
+        width: 400,
+        modal: true,
+        buttons: {
+          "Update": function() {
+            var Plan = {
+              name: $("input[name='planName']").val(),
+              url: $("input[name='planUrl']").val(),
+              _method: 'PUT'
+            };
+            var width = $("input[name='planWidth']").val();
+            if (width.length) {
+              Plan['width'] = width;
+            }
+            var height = $("input[name='planHeight']").val();
+            if (height.length) {
+              Plan['height'] = height;
+            }
+
+            $.ajax({
+              type: "POST",
+              url: '/admin/plan/#{plan.id}',
+              data: Plan,
+              success: function(plan) {
+                $("#plan-dialog").dialog("close");
+
+                $("#plan").attr("src", plan.url);
+                if (plan.width) {
+                  $("#plan").attr('width', plan.width);
+                } else {
+                  $("#plan").removeAttr('width')
+                }
+                if (plan.height) {
+                  $("#plan").attr('height', plan.height);
+                } else {
+                  $("#plan").removeAttr('height')
+                }
+                $("#planSelect option[value='" + plan._id + "']").text(plan.name);
+
+
+                $("#" + plan._id + 'link')
+                  .text(plan.name)
+                  .effect("highlight", {}, 1000);
+                $("#" + plan._id).effect("highlight", {}, 1000);
+              }
+            });
+          },
+          "Delete": function() {
+            $.ajax({
+              type: "POST",
+              url: '/admin/plan/#{plan.id}',
+              data: { _method: 'DELETE' },
+              success: function() {
+                $("#plan-dialog").dialog("close");
+                window.location = '/admin/tags';
+              }
+            });
+          },
+          "Cancel": function() {
+            $("#plan-dialog").dialog("close");
+          }
+        }
+      });
+
+      $("#editPlan").click(function() {
+        $.ajax({                    // request server for the plan
+          type: "GET",
+          url: '/admin/plan/#{plan.id}',
+          success: function(plan) {
+            $("input[name='planName']").val(plan.name);
+            $("input[name='planUrl']").val(plan.url);
+            $("input[name='planWidth']").val(plan.width);
+            $("input[name='planHeight']").val(plan.height);
+            $("#plan-dialog").dialog("open");
+          }
+        });
+        return false;
+      });
+
+      $("#planSelect").change(function() {
+        window.location = '/admin/tags/' + $("#planSelect option:selected").val();
+      });
+    });
+
+#site-bottom-bar
+  #site-bottom-bar-frame
+    #site-bottom-bar-content
+      #subtabs
+        div.tab-row
+          ul
+            - if (plan)
+              li.unselected
+                span Plans:
+                  select#planSelect
+                    - for p in plans
+                      - if (p.id === plan.id)
+                        option(value=p.id, selected)!= p.name
+                      - else
+                        option(value=p.id)!= p.name
+            li.unselected
+              a#addNewPlan(href='#') +Plan
+            - if (plan)
+              li.unselected
+                a#editPlan(href='#') Edit Plan
+
+//- ----------------- new plan dialog ------------------
+div#new-plan-dialog(title="Add Plan")
+  fieldset
+    label Name:
+      input(name='newPlanName')
+    label URL:
+      input(name='newPlanUrl')
+    label Width:
+      input(name='newPlanWidth')
+    label Height:
+      input(name='newPlanHeight')
+
+script(type='text/javascript')
+  $(function() {
+    $("#new-plan-dialog").dialog({
+      autoOpen: false,
+      width: 400,
+      modal: true,
+      buttons: {
+        "Create": function() {
+          var Plan = {
+            name: $("input[name='newPlanName']").val(),
+            url: $("input[name='newPlanUrl']").val()
+          };
+          var width = $("input[name='newPlanWidth']").val();
+          if (width.length) {
+            Plan['width'] = width;
+          }
+          var height = $("input[name='newPlanHeight']").val();
+          if (height.length) {
+            Plan['height'] = height;
+          }
+
+          $.ajax({
+            type: "POST",
+            url: '/admin/plan',
+            data: Plan,
+            success: function(plan) {
+              $("#new-plan-dialog").dialog("close");
+              window.location = '/admin/tags/' + plan._id;
+            }
+          });
+        },
+        "Cancel": function() {
+          $("#new-plan-dialog").dialog("close");
+        }
+      }
+    });
+  });
+
+script(type='text/javascript')
+  $(function() {
+    $("#addNewPlan").click(function() {
+      $("#new-plan-dialog").dialog("open");
+      return false;
+    });
+  });

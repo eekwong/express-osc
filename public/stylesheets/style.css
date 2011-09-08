@@ -1,0 +1,145 @@
+a, a:visited {
+  color: blue;
+  text-decoration: none;
+}
+
+a:hover {
+  color: Red;
+}
+
+img {
+  border: 0;
+}
+
+img.user-photo {
+  max-width: 120px;
+  max-height: 120px;
+}
+
+div#logout {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+div.tag {
+  position: absolute;
+  padding: 4px;
+  border-radius: 5px;
+  font-weight: bold;
+  color: white;
+}
+
+div.tagphoto {
+  position: absolute;
+  display: none;
+  border: 2px solid #333333;
+  z-index: 10000;
+}
+
+div#tabs {
+  float: left;
+  width: 100%;
+}
+
+div#tabs > div.tab-row {
+  float: left;
+  width: 100%;
+  background: white url("../images/bg.gif") repeat-x bottom;
+  line-height: normal;
+  margin-bottom: 20px;
+}
+
+div#tabs > div.tab-row ul {
+  margin: 0;
+  padding: 10px 10px 0;
+  list-style: none;
+}
+
+div#tabs > div.tab-row li {
+  float: left;
+  background: url("../images/left.gif") no-repeat left top;
+  margin: 0;
+  padding: 0 0 0 9px;
+}
+
+div#tabs > div.tab-row a {
+  display: block;
+  background: url("../images/right.gif") no-repeat right top;
+  padding: 5px 15px 4px 6px;
+  text-decoration: none;
+  font-weight: bold;
+  color: #765;
+  white-space: nowrap;
+}
+
+div#tabs > div.tab-row a:hover {
+  color: #333;
+}
+
+div#tabs > div.tab-row li.selected {
+  background-image: url("../images/lefton.gif");
+}
+
+div#tabs > div.tab-row li.selected a {
+  background-image: url("../images/righton.gif");
+  color: #333;
+  padding-bottom: 5px;
+}
+
+div#subtabs > div.tab-row {
+  float: left;
+  width: 100%;
+  background: none;
+  line-height: normal;
+  margin: 0px;
+}
+
+div#subtabs > div.tab-row ul {
+  margin: 0px;
+  padding: 0px;
+  list-style: none;
+}
+
+div#subtabs > div.tab-row li {
+  float: left;
+  background: none;
+  margin: 0;
+  padding: 10px 15px;
+}
+
+div#subtabs > div.tab-row a, span {
+  display: block;
+  background: none;
+  text-decoration: none;
+  font-weight: bold;
+  color: #765;
+  white-space: nowrap;
+}
+
+div#subtabs > div.tab-row a:hover {
+  color: #333;
+}
+
+div#subtabs > div.tab-row li.selected {
+  background-image: none;
+}
+
+div#subtabs > div.tab-row li.selected a {
+  background-image: none;
+  color: #333;
+}
+
+#site-bottom-bar {
+  background-color: #F0F0F0;
+  border-top: 1px solid #CCCCCC;
+  left: 0px;
+  bottom: 0px;
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+}
+
+#site-bottom-bar-frame {
+  position: relative;
+}
